@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>日常任务清单</title>
     <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
     <style>
@@ -26,9 +26,10 @@
             margin: 0;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: flex-start; /* 顶部对齐，防止长页面无法滚动 */
             padding: 40px 20px;
             color: var(--soot-black);
+            box-sizing: border-box; /* 确保padding计算在宽度内 */
         }
 
         .app-container {
@@ -40,28 +41,29 @@
             padding: 30px;
             box-sizing: border-box;
             position: relative;
+            transition: all 0.3s ease; /* 增加平滑过渡 */
         }
 
         /* --- 头部样式修改 --- */
         .header { text-align: center; margin-bottom: 30px; }
         
-        /* 新的 Logo 图片样式 */
+        /* Logo 图片样式 */
         .header-logo-img {
-            width: 110px;        /* 调整 Logo 大小 */
+            width: 110px;
             height: 110px;
-            border-radius: 50%;  /* 变成圆形 */
-            object-fit: cover;   /* 防止图片变形 */
-            border: 5px solid white; /* 白色描边，像贴纸一样 */
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* 柔和投影 */
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             margin-bottom: 15px;
             background-color: white;
-            transition: transform 0.3s;
+            transition: transform 0.3s, width 0.3s, height 0.3s; /* 增加大小过渡 */
         }
         .header-logo-img:hover {
-            transform: scale(1.05) rotate(5deg); /* 鼠标悬停动效 */
+            transform: scale(1.05) rotate(5deg);
         }
 
-        .header h1 { color: var(--wood-brown); margin: 0; font-size: 1.6rem; }
+        .header h1 { color: var(--wood-brown); margin: 0; font-size: 1.6rem; transition: font-size 0.3s; }
         .streak-tag {
             display: inline-block; background: var(--forest-green); color: white;
             padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin-top: 8px;
@@ -72,12 +74,15 @@
         .main-input {
             flex: 1; padding: 12px 20px; border: 3px solid #ECEFF1; border-radius: 30px;
             font-size: 1rem; outline: none; transition: 0.3s;
+            min-width: 0; /* 防止Flex子项溢出 */
         }
         .main-input:focus { border-color: var(--totoro-grey); }
         .btn-add-main {
             background: var(--totoro-grey); color: white; border: none; padding: 0 20px;
             border-radius: 30px; font-weight: bold; cursor: pointer; white-space: nowrap;
+            transition: all 0.2s;
         }
+        .btn-add-main:active { transform: scale(0.95); }
 
         /* 任务卡片 */
         .task-card {
@@ -95,6 +100,7 @@
         .task-title {
             font-size: 1.1rem; font-weight: bold; color: var(--wood-brown);
             display: flex; align-items: center; gap: 10px;
+            word-break: break-all; /* 防止长标题撑破布局 */
         }
 
         .btn-soot-delete {
@@ -114,12 +120,15 @@
             display: flex; align-items: center; margin-bottom: 8px;
             padding: 8px 12px; background: #FAFAFA; border-radius: 12px;
         }
-        .subtask-text { flex: 1; font-size: 0.95rem; color: #555; margin: 0 10px; }
+        .subtask-text { 
+            flex: 1; font-size: 0.95rem; color: #555; margin: 0 10px; 
+            word-break: break-all; /* 防止长文本溢出 */
+        }
         .subtask-item.done .subtask-text { text-decoration: line-through; color: #999; }
 
         .btn-sub-delete {
             background: none; border: none; color: #CCC; font-size: 1.2rem;
-            cursor: pointer; line-height: 1; padding: 0 5px;
+            cursor: pointer; line-height: 1; padding: 0 5px; min-width: 30px; /* 增加点击区域 */
         }
         .btn-sub-delete:hover { color: var(--danger-red); transform: scale(1.2); }
 
@@ -146,10 +155,12 @@
         .sub-input {
             flex: 1; border: none; background: #F0F0F0; padding: 8px 15px;
             border-radius: 20px; font-size: 0.9rem; outline: none;
+            min-width: 0;
         }
         .btn-add-sub {
             background: white; border: 2px solid var(--forest-green); color: var(--forest-green);
             border-radius: 20px; padding: 0 12px; cursor: pointer; font-size: 1.2rem; line-height: 1;
+            flex-shrink: 0; /* 防止按钮被压缩 */
         }
 
         /* 日历 */
@@ -170,15 +181,98 @@
             font-weight: bold;
         }
 
-        .footer-controls { margin-top: 20px; display: flex; justify-content: center; gap: 20px; }
-        .text-link { color: #AAA; font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
+        .footer-controls { margin-top: 20px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .text-link { color: #AAA; font-size: 0.8rem; cursor: pointer; text-decoration: underline; padding: 5px; }
+
+        /* --- 2. 自适应/响应式布局 (关键修改) --- */
+        
+        /* 平板和窄屏电脑 (最大宽度 768px) */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 20px 10px; /* 减少页面外边距 */
+            }
+            .app-container {
+                padding: 25px 20px; /* 稍微减少内部padding */
+                max-width: 100%; /* 占满可用空间 */
+            }
+        }
+
+        /* 手机端 (最大宽度 480px) */
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 10px 5px; /* 手机端极窄外边距 */
+            }
+            
+            .app-container {
+                border-radius: 25px; /* 圆角变小一点 */
+                padding: 20px 15px; /* 内容区域更紧凑 */
+                box-shadow: 0 10px 25px rgba(78, 124, 87, 0.2), inset 0 0 0 5px rgba(158, 167, 170, 0.2);
+            }
+
+            /* Logo 缩小 */
+            .header-logo-img {
+                width: 90px;
+                height: 90px;
+                margin-bottom: 10px;
+            }
+            .header h1 {
+                font-size: 1.4rem;
+            }
+
+            /* 输入框和主按钮调整 */
+            .main-input-group {
+                gap: 8px;
+                margin-bottom: 20px;
+            }
+            .main-input {
+                padding: 10px 15px;
+                font-size: 0.95rem;
+            }
+            .btn-add-main {
+                padding: 0 15px; /* 按钮变窄 */
+                font-size: 0.9rem;
+            }
+
+            /* 任务卡片调整 */
+            .task-card {
+                padding: 15px;
+                border-radius: 15px;
+            }
+            .task-title {
+                font-size: 1rem;
+            }
+            .subtask-item {
+                padding: 6px 10px;
+            }
+            
+            /* 日历调整 */
+            .calendar-box {
+                margin-top: 25px;
+                padding: 15px;
+            }
+            .calendar-grid {
+                gap: 3px; /* 缩小格子间距 */
+            }
+            .day-leaf {
+                font-size: 0.65rem; /* 缩小字体 */
+                border-radius: 3px 10px 3px 10px;
+            }
+            .flower-icon {
+                font-size: 0.8rem;
+            }
+            .flower-count {
+                font-size: 0.55rem;
+                padding: 0 4px;
+                bottom: -3px; right: -3px;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="app-container">
         <header class="header">
-            <img src="./xiaohui_cartoon.jpg" alt="Logo" class="header-logo-img">
+            <img src="./xiaohui_cartoon.jpg" alt="Logo" class="header-logo-img" onerror="this.style.display='none'">
             
             <h1>日常任务清单</h1>
             <div class="streak-tag">连续打卡 <span id="streakDisplay">0</span> 天</div>
@@ -203,7 +297,7 @@
     </div>
 
     <script>
-        const DB_KEY = 'daily_task_totoro_v5'; // 更新版本号以防冲突
+        const DB_KEY = 'daily_task_totoro_v5'; 
         let appData = { history: {}, lastLogin: "" };
 
         const getToday = () => {
@@ -227,7 +321,7 @@
         }
 
         function save() {
-            calculateFlowers(); // 保存前必须重算花朵
+            calculateFlowers(); 
             updateStreak();
             localStorage.setItem(DB_KEY, JSON.stringify(appData));
         }
